@@ -423,12 +423,12 @@ def engine_try_config(platform_args, fuchsia_ctl_version):
         **platform_args["linux"]
     )
     common.linux_try_builder(
-        name='Linux Fuchsia FEMU',
-        recipe='femu_test',
-        repo=repos.ENGINE,
+        name = "Linux Fuchsia FEMU",
+        recipe = "femu_test",
+        repo = repos.ENGINE,
         list_view_name = list_view_name,
         properties = engine_properties(fuchsia_ctl_version = fuchsia_ctl_version),
-        **platform_args['linux'],
+        **platform_args["linux"]
     )
     common.linux_try_builder(
         name = "Linux Android Debug Engine|dbg",
