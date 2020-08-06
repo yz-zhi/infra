@@ -53,7 +53,7 @@ def full_recipe_name(recipe_name, version):
 
 def engine_recipes(version):
     """Creates a luci recipe for a given code version."""
-    for name in ["engine", "web_engine", "engine_builder"]:
+    for name in ["engine", "web_engine", "engine_builder", "femu_test"]:
         luci.recipe(
             name = full_recipe_name(name, version),
             cipd_package =
@@ -421,6 +421,14 @@ def engine_try_config(platform_args, fuchsia_ctl_version):
         list_view_name = list_view_name,
         properties = engine_properties(fuchsia_ctl_version = fuchsia_ctl_version),
         **platform_args["linux"]
+    )
+    common.linux_try_builder(
+        name='Linux Fuchsia FEMU',
+        recipe='femu_test',
+        repo=repos.ENGINE,
+        list_view_name = list_view_name,
+        properties = engine_properties(fuchsia_ctl_version = fuchsia_ctl_version),
+        **platform_args['linux'],
     )
     common.linux_try_builder(
         name = "Linux Android Debug Engine|dbg",
