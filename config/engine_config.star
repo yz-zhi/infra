@@ -212,6 +212,17 @@ def engine_prod_config(platform_args, branch, version, ref, fuchsia_ctl_version)
         priority = 30 if branch == "master" else 25,
         **platform_args["linux"]
     )
+
+    common.linux_prod_builder(
+        name = builder_name("Linux%s Fuchsia FEMU|femu", branch),
+        recipe = full_recipe_name("femu_test", version),
+        console_view_name = console_view_name,
+        properties = engine_properties(fuchsia_ctl_version = fuchsia_ctl_version),
+        triggered_by = [trigger_name],
+        triggering_policy = triggering_policy,
+        priority = 30 if branch == "master" else 25,
+        **platform_args["linux"]
+    )
     common.linux_prod_builder(
         name = builder_name("Linux%s Android Debug Engine|dbg", branch),
         recipe = full_recipe_name("engine", version),
@@ -423,9 +434,10 @@ def engine_try_config(platform_args, fuchsia_ctl_version):
         **platform_args["linux"]
     )
     common.linux_try_builder(
-        name = "Linux Fuchsia FEMU",
+        name = "Linux Fuchsia FEMU|femu",
         recipe = "femu_test",
         repo = repos.ENGINE,
+        add_cq = True,
         list_view_name = list_view_name,
         properties = engine_properties(fuchsia_ctl_version = fuchsia_ctl_version),
         **platform_args["linux"]
