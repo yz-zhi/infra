@@ -58,6 +58,7 @@ def framework_prod_config(platform_args, branch, version, ref):
     # TODO(godofredoc): Merge the recipe names once we remove the old one.
     recipe_name = ("flutter_" + version if version else "flutter")
     new_recipe_name = ("flutter/flutter_" + version if version else "flutter/flutter")
+    drone_recipe_name = ("flutter/flutter_drone_" + version if version else "flutter/flutter_drone")
     luci.recipe(
         name = recipe_name,
         cipd_package = "flutter/recipe_bundles/flutter.googlesource.com/recipes",
@@ -70,6 +71,11 @@ def framework_prod_config(platform_args, branch, version, ref):
     )
     luci.recipe(
         name = new_recipe_name,
+        cipd_package = "flutter/recipe_bundles/flutter.googlesource.com/recipes",
+        cipd_version = "refs/heads/master",
+    )
+    luci.recipe(
+        name = drone_recipe_name,
         cipd_package = "flutter/recipe_bundles/flutter.googlesource.com/recipes",
         cipd_version = "refs/heads/master",
     )
@@ -112,6 +118,24 @@ def framework_prod_config(platform_args, branch, version, ref):
         **platform_args["linux"]
     )
     common.linux_prod_builder(
+        name = "Linux%s build_tests|bld_tests" % ("" if branch == "master" else " " + branch),
+        recipe = new_recipe_name,
+        console_view_name = console_view_name,
+        triggered_by = [trigger_name],
+        triggering_policy = triggering_policy,
+        properties = {
+            "shard": "build_tests",
+            "android_sdk_license": "\n24333f8a63b6825ea9c5514f83c2829b004d1fee",
+            "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
+            "dependencies": ["android_sdk", "chrome_and_drivers"],
+            "subshards": ["0", "1_last"],
+        },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_prod_builder(
         name = "Linux%s framework_tests|frwk_tests" % ("" if branch == "master" else " " + branch),
         recipe = new_recipe_name,
         console_view_name = console_view_name,
@@ -142,6 +166,53 @@ def framework_prod_config(platform_args, branch, version, ref):
             "dependencies": ["android_sdk", "chrome_and_drivers"],
             "subshards": ["0", "1", "2", "3_last"],
         },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_prod_builder(
+        name = "Linux%s tool_tests|tool_tests" % ("" if branch == "master" else " " + branch),
+        recipe = new_recipe_name,
+        console_view_name = console_view_name,
+        triggered_by = [trigger_name],
+        triggering_policy = triggering_policy,
+        properties = {
+            "shard": "tool_tests",
+            "android_sdk_license": "\n24333f8a63b6825ea9c5514f83c2829b004d1fee",
+            "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
+            "dependencies": ["android_sdk", "chrome_and_drivers"],
+            "subshards": ["general", "commands", "integration"],
+        },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_prod_builder(
+        name = "Linux%s web_tests|web_tests" % ("" if branch == "master" else " " + branch),
+        recipe = new_recipe_name,
+        console_view_name = console_view_name,
+        triggered_by = [trigger_name],
+        triggering_policy = triggering_policy,
+        properties = {
+            "shard": "web_tests",
+            "android_sdk_license": "\n24333f8a63b6825ea9c5514f83c2829b004d1fee",
+            "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
+            "dependencies": ["android_sdk", "chrome_and_drivers"],
+            "subshards": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11_last"],
+        },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_prod_builder(
+        name = "Linux%s SDK Drone|frwdrn" % ("" if branch == "master" else " " + branch),
+        recipe = drone_recipe_name,
+        console_view_name = None,
+        no_notify = True,
+        priority = 30 if branch == "master" else 25,
         caches = [
             swarming.cache(name = "pub_cache", path = ".pub_cache"),
             swarming.cache(name = "android_sdk", path = "android29"),
@@ -189,6 +260,23 @@ def framework_try_config(platform_args):
         **platform_args["linux"]
     )
     common.linux_try_builder(
+        name = "Linux build_tests|bld_tests",
+        recipe = "flutter/flutter",
+        repo = repos.FLUTTER,
+        list_view_name = list_view_name,
+        properties = {
+            "shard": "build_tests",
+            "android_sdk_license": "\n24333f8a63b6825ea9c5514f83c2829b004d1fee",
+            "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
+            "dependencies": ["android_sdk", "chrome_and_drivers"],
+            "subshards": ["0", "1_last"],
+        },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_try_builder(
         name = "Linux framework_tests|frwk_tests",
         recipe = "flutter/flutter",
         repo = repos.FLUTTER,
@@ -216,6 +304,40 @@ def framework_try_config(platform_args):
             "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
             "dependencies": ["android_sdk", "chrome_and_drivers"],
             "subshards": ["0", "1", "2", "3_last"],
+        },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_try_builder(
+        name = "Linux tool_tests|tool_tests",
+        recipe = "flutter/flutter",
+        repo = repos.FLUTTER,
+        list_view_name = list_view_name,
+        properties = {
+            "shard": "tool_tests",
+            "android_sdk_license": "\n24333f8a63b6825ea9c5514f83c2829b004d1fee",
+            "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
+            "dependencies": ["android_sdk", "chrome_and_drivers"],
+            "subshards": ["general", "commands", "integration"],
+        },
+        caches = [
+            swarming.cache(name = "pub_cache", path = ".pub_cache"),
+            swarming.cache(name = "android_sdk", path = "android29"),
+        ],
+    )
+    common.linux_try_builder(
+        name = "Linux web_tests|web_tests",
+        recipe = "flutter/flutter",
+        repo = repos.FLUTTER,
+        list_view_name = list_view_name,
+        properties = {
+            "shard": "web_tests",
+            "android_sdk_license": "\n24333f8a63b6825ea9c5514f83c2829b004d1fee",
+            "android_sdk_preview_license": "\n84831b9409646a918e30573bab4c9c91346d8abd",
+            "dependencies": ["android_sdk", "chrome_and_drivers"],
+            "subshards": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11_last"],
         },
         caches = [
             swarming.cache(name = "pub_cache", path = ".pub_cache"),
